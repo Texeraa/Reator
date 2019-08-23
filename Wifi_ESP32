@@ -1,0 +1,79 @@
+
+
+#define CAYENNE_PRINT Serial
+#include <CayenneMQTTESP32.h>
+#include <WiFi.h>
+
+// WiFi network info.
+char ssid[] = "laboratorio_h005";
+char wifiPassword[] = "final_de_semestre";
+
+// Cayenne authentication info. This should be obtained from the Cayenne Dashboard.
+char username[] = "6f64a310-bdd9-11e9-b01f-db5cf74e7fb7";
+char password[] = "4a58ff3cd31ed7e3e8de5af97283d987ed9199bc";
+char clientID[] = "b357f1e0-bf68-11e9-b6c9-25dbdbf93e02";
+
+#define VIRTUAL_CHANNEL 5
+#define ACTUATOR_PIN 3
+
+double TEMP1, Temp_SP, V_SP;
+double TEMPJ;
+
+//HardwareSerial Serial1(2);
+
+void setup() {
+  Serial.begin(9600);
+  Serial2.begin(9600);
+  Cayenne.begin(username, password, clientID, ssid, wifiPassword);
+}
+
+void loop()
+{
+    if(Serial2.available() > 0){
+    // Lê primeiro byte digitado pelo usuário e atua no sistema
+    
+        switch (Serial2.read()){
+
+           case 'A':
+                    TEMP1 = 100*Serial2.parseFloat();
+                    Serial.print("A");
+                    Serial.println(TEMP1);
+                    break;
+           case 'B':
+                    TEMPJ = 100*Serial2.parseFloat();
+                    Serial.print("B");
+                    Serial.println(TEMPJ);
+                    break;
+      
+        }
+    }
+  Cayenne.loop();
+}
+
+// This function is called when data is sent from Cayenne.
+CAYENNE_IN(5)
+{
+  int value = getValue.asInt(); // 0 to 255
+  Temp_SP = value;
+  Serial.print("T");
+  Serial.println(Temp_SP);
+  Serial2.print("T");
+  Serial2.println(Temp_SP);
+}
+
+CAYENNE_IN(6)
+{
+  double value = getValue.asDouble(); // 0 to 255
+  V_SP = value;
+  Serial.print("V");
+  Serial.println(V_SP);
+  Serial2.print("V");
+  Serial2.println(V_SP);
+}
+
+CAYENNE_OUT_DEFAULT()
+{
+  Cayenne.virtualWrite(0, millis()/1000);
+  Cayenne.virtualWrite(1, TEMP1/100);
+  Cayenne.virtualWrite(2, TEMPJ/100);
+}
